@@ -5,6 +5,10 @@ The aim of this project is to run some code on an Arduino Pro Micro (ATmega32U4)
 
 Maybe later I will try to forward the buttons to my android phone.
 
+# Status
+
+This git is just a dump of what I researched and wrote down this morning.
+
 # Acknowledgement
 
 Special thanks to Reinis Veips work on the protocol: http://volvo.wot.lv/wiki/doku.php?id=melbus
