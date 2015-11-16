@@ -35,4 +35,6 @@ So, idea: attach a step down converter to the 12V "only on when ignition is on" 
 There are cheap, readily assembled 5V @ 5A step down converters with 4 USB ports available at Amazon.de for about 10 USD. The Battery Buffer board could be attached to that (not sure where to find a board for that, may be need my own), and power the arduino.
 The arduino could in turn manage the power of an attached RPi
 
+Bonus: The remaining USB ports could be forwarded to the passanger compartment, which would make for a nice & clean USB charger without those annoying lights. 5A should enough for Arduino + RPi + 2.5" HDD + Buffer Charger + 2 Smart Phones.
+
 Okay, maybe I should start taking a closer look at repurposing Reinis code :)
