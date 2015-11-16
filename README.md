@@ -19,8 +19,8 @@ But his implementation for the AVR does "too much", I just want to plugin a 3.5m
 # Future work
 
 0. Implement communication code (via ISR)
-1. figure out how that's actually done
-2. I need to get real hardware to test the code (I don't have an Arduino -- d'oh)
+1. figure out how that's actually done on arduino/native C/C++ on arduino
+2. Implement a passive sniffer mode (!)
 3. Send Text to the HU (people have done this)
 3. Open up the Bluetooth receiver and see if I can forward the NextTrack/PrevTrack buttons [just maybe]
 4. Have the arduino become a USB keyboard, so I can attach it to my phone and forward ALL button functions to it
