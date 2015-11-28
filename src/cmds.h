@@ -13,10 +13,10 @@ enum Cmd {
 struct cmd_t {
     Cmd cmd;
     unsigned char length;
-    const char[6] code;
+    const char code[6];
 };
 
-#define g_cmdTableSize 11;
+#define g_cmdTableSize 14
 const struct cmd_t g_cmdTable[g_cmdTableSize] = {
     {Init,         3, {0x07, 0x1a, 0xee}},
     {Init,         3, {0x00, 0x1c, 0xed}},

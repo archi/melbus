@@ -3,7 +3,7 @@ struct device_t {
     const char respId;
     bool enabled;
     bool initialized;
-    char info[15];
+    volatile char info[15];
 };
 
 //init, {TRACK + CART}      0     1     2     3     4     5     6     7     8 ||| 9     10    11    12    13    14
@@ -24,13 +24,13 @@ struct device_t {
 #define ENABLE_MDC true
 #else
 #define ENABLE_MDC false
-#fi
+#endif
 
 #ifdef CDC
 #define ENABLE_CDC true
 #else
 #define ENABLE_CDC false
-#fi
+#endif
 
 #define g_devicesSize 2
 volatile struct device_t g_devices[g_devicesSize] = {
