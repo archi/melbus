@@ -8,6 +8,8 @@
 #define PIN_CLK 2
 #define PIN_DATA 3
 #define PIN_BUSY 4
+
+#define RXLED 17
  
 #include "devices.h"
 #include "cmds.h"
@@ -15,12 +17,12 @@
 #include "protocol.h"
 
 void setup () {
-    Serial.begin(115200,SERIAL_8N1);
-    Serial.println ("Setup...");
     setup_isr ();
+    pinMode (RXLED, OUTPUT); 
+    digitalWrite (RXLED, LOW);
 }
 
-unsigned char g_lnCount;
+bool g_txLed = false;
 
 void loop () {
     if (g_inByteReady) {
@@ -30,19 +32,19 @@ void loop () {
         }
         g_inputBuffer[g_bufferSize - 1] = g_inByte;
         g_inByteReady = false;
+        handleCmd ();
+    }
 
-        if (g_tooSlow) {
-            g_tooSlow = false;
-            Serial.println ("!!!");
-        }
-        
-        if (g_lnCount < 7) {
-            Serial.print (g_inByte, HEX);
-            Serial.print (", ");
-            g_lnCount++;
-        } else if (g_lnCount == 8) {
-            Serial.println (g_inByte, HEX);
-            g_lnCount = 0;
-        }
+    if (g_tooSlow) {
+        digitalWrite (RXLED, HIGH);
+    }
+
+    if (g_state == Receive && g_txLed) {
+        g_txLed = false;
+        TXLED0;
+    } else if (!g_txLed) {
+        g_txLed = true;
+        TXLED1;
     }
 }
+
