@@ -49,6 +49,6 @@ void isr_readBit () {
     if (g_inPos == 8) {
         g_inByte = g_inCurrentByte;
         g_inByteReady = true;
-        g_inPOs = 0;
+        g_inPos = 0;
     }
 }
