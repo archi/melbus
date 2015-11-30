@@ -26,7 +26,17 @@ unsigned char g_lnCount;
 
 void loop () {
     if (g_inByteReady) {
+
+        for (int i = g_bufferSize - 1; i > 0; i--) {
+            g_inputBuffer[i-1] = g_inputBuffer[i];
+        }
+        g_inputBuffer[g_bufferSize - 1] = g_inByte;
         g_inByteReady = false;
+
+        if (g_tooSlow) {
+            g_tooSlow = false;
+            Serial.println ("\nProcessing is too slow!");
+        }
         
         if (g_lnCount < 7) {
             Serial.print (g_inByte, HEX);
@@ -36,11 +46,5 @@ void loop () {
             Serial.println (g_inByte, HEX);
             g_lnCount = 0;
         }
-
-        for (int i = g_bufferSize - 1; i > 0; i--) {
-            g_inputBuffer[i-1] = g_inputBuffer[i];
-        }
-
-        g_inputBuffer[g_bufferSize - 1] = g_inByte;
     }
 }

@@ -19,6 +19,7 @@ volatile unsigned short g_outputPos = 0;
 volatile unsigned short g_outputSize = 0;
 
 volatile bool g_inByteReady = false;
+volatile bool g_tooSlow = false;
 volatile char g_inByte = 0xff;
 
 volatile short g_inPos = 0;
@@ -47,6 +48,9 @@ void isr_readBit () {
     g_inCurrentByte += digitalRead (PIN_DATA);
     g_inPos++;
     if (g_inPos == 8) {
+        if (g_inByteReady) {
+            g_tooSlow = true;
+        }
         g_inByte = g_inCurrentByte;
         g_inByteReady = true;
         g_inPos = 0;
