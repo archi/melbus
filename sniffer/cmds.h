@@ -34,3 +34,20 @@ const struct cmd_t g_cmdTable[g_cmdTableSize] = {
     {NopAck,    2, {0x19, 0x2e}},    //ScanMode
     {NopAck,    2, {0x19, 0x52}}     //RndMode
 };
+
+void printCmd (Cmd c) {
+#define PCMD(_X_) case _X_: Serial.println (#_X_); break        
+    switch (c) {
+        PCMD (Init);
+        PCMD (TrackInfo);
+        PCMD (CartInfo);
+        PCMD (NextTrack);
+        PCMD (PrevTrack);
+        PCMD (NextDisc);
+        PCMD (PrevDisc);
+        PCMD (NopAck);
+        PCMD (InitWaiting);
+        PCMD (Wait);
+    }
+#undef PCMD
+}
