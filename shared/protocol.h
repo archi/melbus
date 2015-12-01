@@ -31,11 +31,11 @@ Cmd decodeCmd () {
     return Wait;
 }
 
-void handleCmd () {
+void handleCmd (Cmd in) {
     Cmd c = g_currentCmd; 
    
     if (c != InitWaiting) {
-        c = decodeCmd ();
+        c = in;
         g_currentCmd = c;
     }
     
@@ -83,16 +83,16 @@ void handleCmd () {
             break;
             
         case TrackInfo:
-            sendBuffer ((volatile char**)&g_dev->info, 9);
+            sendBuffer ((volatile unsigned char**)&g_dev->info, 9);
             break;
             
         case CartInfo:
-            sendBuffer ((volatile char**)&g_dev->info, 6, 9);
+            sendBuffer ((volatile unsigned char**)&g_dev->info, 6, 9);
             break;
             
         case NextTrack:
             {
-                char n = g_dev->info[5]+1;
+                unsigned char n = g_dev->info[5]+1;
                 if (n > 0x99) n = 0x99;
                 if ((n & 0x0f) > 0x09) n += 6;
                 g_dev->info[5] = n;

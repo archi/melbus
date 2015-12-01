@@ -1,15 +1,15 @@
 enum State {PreSend, Send, PreReceive, Receive};
 volatile State g_state = Receive;
 
-#define g_bufferSize 24
+#define g_bufferSize 16
 volatile char g_inputBuffer[g_bufferSize] = {
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+//    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
 volatile char g_outputBuffer[g_bufferSize] = {
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+//    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
@@ -23,7 +23,7 @@ volatile bool g_inByteReady = false;
 volatile bool g_tooSlow = false;
 volatile char g_inByte = 0xff;
 
-volatile unsigned short g_inPos = 0;
+volatile unsigned short g_bitsRead = 0;
 volatile char g_inCurrentByte = 0xff;
 
 void sendBuffer (volatile char** buf, unsigned char len, unsigned char offset = 0) {
@@ -46,39 +46,48 @@ inline void sendAck () {
 void isr_clock () {
     switch (g_state) {
         case PreReceive:
+            //Set to input mode and continue receiving
             g_state = Receive;
-            pinMode (PIN_DATA, INPUT);
+            ioCfgData (true);
             //fall-through:
         case Receive:
             {
-                char b = g_inCurrentByte;
-                b <<= 1;
-                b += (0x1 & digitalRead (PIN_DATA));
-                g_inCurrentByte = b;
+                int bitsRead = g_bitsRead;
+                unsigned char b = 0x0;
+                if (bitsRead > 0)
+                    b = g_inCurrentByte;
 
-                short bitPos = g_inPos + 1;
-                if (bitPos == 8) {
+                b <<= 1;
+                if (readPin (DATA_PIN) {
+                    b += 0x1;
+                }
+                g_inCurrentByte = b & 0xff;
+                bitsRead++;
+
+                if (bitsRead == 8) {
                     if (g_inByteReady) {
                         g_tooSlow = true;
                     }
                     g_inByte = g_inCurrentByte;
                     g_inByteReady = true;
-                    bitPos = 0;
+                    bitsRead = 0;
                 }
-                g_inPos = bitPos;
+                g_bitsRead = bitsRead;
             }
             break;
 
         case PreSend:
             g_state = Send;
-            pinMode (PIN_DATA, OUTPUT); 
+            ioCfgData (false);
             //fall-through:
         case Send:
             {
+                //TODO properly adapt to sending.
+                //Since we are going to send in "burst", we could do this outside of the ISR!
                 if ((*g_outputPtr)[g_outputPos] && (0x1 << g_outputBit)) {
-                    digitalWrite (PIN_DATA, HIGH);
+                    writePin (DATA_PIN, 1);
                 } else {
-                    digitalWrite (PIN_DATA, LOW);
+                    writePin (DATA_PIN, 0);
                 }
                 
                 short bitPos = g_outputBit;
@@ -114,17 +123,18 @@ void setup_comm () {
 
     g_inByteReady = false;
     g_tooSlow = false;
-    g_inByte = 0xff;
+    g_inByte = 0x0;
 
-    g_inPos = 0;
-    g_inCurrentByte = 0xff;
+    g_bitsRead = 0;
+    g_inCurrentByte = 0x0;
     
-    pinMode (PIN_DATA, INPUT);
-    attachInterrupt (digitalPinToInterrupt (PIN_CLK), isr_clock, FALLING);
+    ioCfgData (true);
+    ioCfgClock ();
+    attachInterrupt (CLK_INT, isr_clock, RISING);
     
     //pull low for 1s to signal presence
-    pinMode (PIN_BUSY, OUTPUT);
-    digitalWrite (PIN_BUSY, LOW);
+    ioCfgBusy (false);
+    writePin (BUSY_PIN, 0);
 
     //blink TX+RX LED for about 1s
     for (int i = 0; i < 5; i++) {
@@ -134,8 +144,6 @@ void setup_comm () {
         delay (100);
     }
     
-    digitalWrite (PIN_BUSY, HIGH);
-
-    //and now as input again
-    pinMode (PIN_BUSY, INPUT);
+    writePin (BUSY_PIN, 1);
+    ioCfgBusy (true);    
 }

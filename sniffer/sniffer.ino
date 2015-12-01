@@ -1,13 +1,13 @@
 /**
- * This will NOT build!
- *
- * Protocol Ref:
- *   http://volvo.wot.lv/wiki/doku.php?id=melbus
+ * Sniffer serial commands:
+ * 
+ * r reset comm
+ * 
+ * s signal presence
+ * c toggle communication (allow answer)
+ * 
+ * p toggle printing of hex values
  */
-
-#define PIN_CLK 2
-#define PIN_DATA 3
-#define PIN_BUSY 4
 
 /**
  * Counter intuitive:
@@ -15,61 +15,121 @@
  *  LOW  => on
  */
 #define RXLED 17
- 
+
+#include "io.h"
 #include "devices.h"
 #include "cmds.h"
 #include "comm.h"
 #include "protocol.h"
-
-unsigned short g_lnCount;
-bool g_txLed;
 
 void setup () {
     pinMode (RXLED, OUTPUT);
     digitalWrite (RXLED, HIGH);
     
     Serial.begin(230400,SERIAL_8N1);
-    Serial.println ("Setup...");
+    Serial.println ("Waiting 30s for input");
     
-    //TXLED1;
-    g_txLed = true;
-    g_lnCount = 0;
+    Serial.setTimeout (30000);
+    char x;
+    Serial.readBytes (&x, 1);
+    Serial.println ("ok");
     
     setup_comm ();
 }
 
+bool g_print = true;
+bool g_answer = false;
+
 void loop () {
-    if (g_inByteReady) {
-        //TODO disabled for now (faster code)
-        //for (int i = g_bufferSize - 1; i > 0; i--) {
-        //    g_inputBuffer[i-1] = g_inputBuffer[i];
-        //}
-        //g_inputBuffer[g_bufferSize - 1] = g_inByte;
+    while (g_inByteReady) {
         char in = g_inByte;
         g_inByteReady = false;
+      
+        for (int i = g_bufferSize - 1; i > 0; i--) {
+            g_inputBuffer[i-1] = g_inputBuffer[i];
+        }
+        g_inputBuffer[g_bufferSize - 1] = in;
 
         if (g_tooSlow) {
             g_tooSlow = false;
-            digitalWrite (RXLED, LOW);
-            Serial.println ("!!!");
+            Serial.print ("Too slow!");
         }
-        
-        if (g_lnCount < 7) {
-            Serial.print (in, HEX);
-            Serial.print (", ");
-            g_lnCount++;
-        } else if (g_lnCount == 8) {
-            Serial.println (in, HEX);
-            g_lnCount = 0;
 
-            //Toggle the TXLED every 8 bytes received
-            if (g_txLed) {
-              //TXLED0;
-              g_txLed = false;
-            } else {
-              g_txLed = true;
-              //TXLED1;
+        int i = in & 0xff;
+        if (g_print) {
+            Serial.print ("Data: 0x");
+            
+            Serial.print (i, HEX);
+            Serial.print (" 0x");
+            i = (~i) & 0xff;
+            Serial.println (i, HEX);
+        }
+
+        Cmd c = decodeCmd ();
+        
+        if (g_answer) {
+            handleCmd (c);
+        }
+
+#define PCMD(_X_) case _X_: Serial.println (#_X_); break        
+        if (!g_answer && c != Wait) {
+            switch (c) {
+                PCMD (Init);
+                PCMD (TrackInfo);
+                PCMD (CartInfo);
+                PCMD (NextTrack);
+                PCMD (PrevTrack);
+                PCMD (NextDisc);
+                PCMD (PrevDisc);
+                PCMD (NopAck);
+                default:
+                    Serial.println ("Got Wait or InitWaiting??");
+                    break;
             }
         }
+#undef PCMD
     }
+
+    sync_comm ();
+    
+    SerialEvent ();
 }
+
+bool SerialEvent () {
+    if (Serial.available ()) {
+        char inChar = (char)Serial.read();
+        switch (inChar) {
+            case 'c':
+                g_answer = !g_answer;
+                break;
+                
+            case 'p':
+                g_print = !g_print;
+                break; 
+              
+            case 'r':
+                Serial.println ("reset comm");
+                detachInterrupt (CLK_INT);
+                setup_comm ();
+                break;
+
+            case 's':
+                Serial.println ("Signaling presence");
+                noInterrupts ();
+                       
+                ioCfgBusy (false); //output
+                writePin (BUSY_PIN, 0); //low
+                delay(1000);
+                writePin (BUSY_PIN, 1); //high
+                ioCfgBusy (true); //input
+                
+                interrupts ();
+                break;
+                               
+        } //end switch
+
+        return true;
+    }
+    return false;
+}
+
