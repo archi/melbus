@@ -21,10 +21,10 @@ volatile unsigned short g_outputSize = 0;
 
 volatile bool g_inByteReady = false;
 volatile bool g_tooSlow = false;
-volatile char g_inByte = 0xff;
+volatile unsigned char g_inByte = 0xff;
 
 volatile unsigned short g_bitsRead = 0;
-volatile char g_inCurrentByte = 0xff;
+volatile unsigned char g_inCurrentByte = 0xff;
 
 void sendBuffer (volatile unsigned char** buf, unsigned char len, unsigned char offset = 0) {
     g_outputBit = 0;
@@ -34,7 +34,7 @@ void sendBuffer (volatile unsigned char** buf, unsigned char len, unsigned char 
     g_state = PreSend;
 }
 
-inline void sendByte (const char b) {
+inline void sendByte (const unsigned char b) {
     g_outputBuffer[0] = b;
     sendBuffer ((volatile unsigned char**) &g_outputBuffer, 1);
 }

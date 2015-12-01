@@ -10,9 +10,16 @@ Cmd decodeCmd () {
             if (g_cmdTable[i].code[k] != g_inputBuffer[bPos])
                 match = false;
         }
-        
+
+
         if (match) {
-            //cmd matches, check if for us
+            Cmd cmd = g_cmdTable[i].cmd;
+        
+            //Init is for everyone -> early out    
+            if (cmd == Init)
+                return cmd;
+
+            //cmd matches, check if it is for us
             char devId = g_inputBuffer[g_bufferSize - length - 1];
             for (int i = 0; i < g_devicesSize; i++) {
                 if (!g_devices[i].initialized)
@@ -20,7 +27,7 @@ Cmd decodeCmd () {
                 
                 char id = g_devices[i].baseId;
                 if (id == devId || (id + 1) == devId)
-                    return g_cmdTable[i].cmd;
+                    return cmd;
             }
             
             //cmd matches, but is not for us
