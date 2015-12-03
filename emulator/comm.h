@@ -19,8 +19,6 @@ inline void sync_comm () {
 }
 
 inline void sendByteRaw (const unsigned char b) {
-    //turn of TXLED, so a permanent on TXLED + loss of comm -> no more ext clock
-    TXLED0;
     for (int bitPos = 7; bitPos >= 0; bitPos--) {
         bool val = b & (1 << bitPos);
         if (val) {
@@ -29,10 +27,8 @@ inline void sendByteRaw (const unsigned char b) {
             writePin (DATA_PIN, 0);
         }
 
-        TXLED1;
-        while (readPin (CLK_PIN)) {/*wait*/};
-        while (!readPin (CLK_PIN)) {/*wait*/};
-        TXLED0;
+        while (readPin (CLK_PIN))  { blinkTX(Fast); };
+        while (!readPin (CLK_PIN)) { blinkTX(Fast); };
     }
 }
 
@@ -47,6 +43,8 @@ void sendBuffer (unsigned char* buf, int len, int offset = 0) {
     
     ioCfgData (true);
     intFastOn;
+
+    blinkClear ();
 
 #ifdef ENABLE_SERIAL
     Serial.print ("SENT BUFFER: ");
@@ -65,6 +63,8 @@ void sendByte (const unsigned char b) {
     
     ioCfgData (true);
     intFastOn;
+
+    blinkClear ();
 
 #ifdef ENABLE_SERIAL
     Serial.print ("SENT: ");
@@ -103,24 +103,57 @@ void isr_clock () {
     }
 }
 
+//this is experimental:
+//#define SMART_BUSY
+
 void comm_signal () {
+#ifdef SMART_BUSY
     intFastOff;
+
+    /**
+     * wait for BUSY to go high [=idle], so we don't jam the line
+     */
+    while (readPin (BUSY_PIN) && !g_inByteReady) {
+        blinkAsync (Fast);
+    }
+
+    //Idea: busy line got free; but if we got a byte, maybe no need to signal presence?
+    //if this is enabled, intFastOff needs to be moved 
+    if (g_inByteReady) {
+        blinkClear ();
+#ifdef ENABLE_SERIAL
+        Serial.println ("presence noted?");
+#endif
+        return;
+    }
+#else
+    /**
+     * wait for BUSY to go high [=idle], so we don't jam the line
+     */
+    while (readPin (BUSY_PIN)) {
+        blinkAsync (Fast);
+    }
+    
+    intFastOff;
+#endif
+    
+    //ok, busy is HIGH, we can pull it low now
            
     ioCfgBusy (false); //output
     writePin (BUSY_PIN, 0); //low
 
     //blink RX LED for about 1s
-    for (int i = 0; i < 5; i++) {
-        RXLED1;
-        delay (100);
-        RXLED0;
-        delay (100);
+    unsigned long m = millis () + 1000;
+    while (millis () < m) {
+        blinkAsync (Slow);
     }
     
     writePin (BUSY_PIN, 1); //high
     ioCfgBusy (true); //input
     
     intFastOn;
+
+    blinkClear ();
 }
 
 void setup_comm () {
@@ -139,3 +172,4 @@ void setup_comm () {
     ioCfgClock ();
     attachInterrupt (CLK_INT, isr_clock, RISING);
 }
+

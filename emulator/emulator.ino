@@ -9,9 +9,15 @@
  * p toggle printing of hex values
  * 
  * LED meaning:
- *  RX: blinking for 1s -> signal presence
- *  RX: const -> processing was too slow [never cleared!]
- *  TX: on -> waiting for data
+ *  only TX, fast: Sending data [actually: waiting for a clock cylce so the current bit was accepted]
+ *  
+ *  TX+RX async, fast: waiting for busy line to become free
+ *  TX+RX async, normal: we are signaling presence on the busy line
+ * 
+ *  TX+RX sync, slow: waiting for data
+ *  
+ *  only RX, fast: receiving data
+ *  TX+RX sync, fast: receiving data, but we were too slow at some point in time [cleared after 10s]
  */
 
 /**
@@ -77,7 +83,7 @@
 //#define TXLED1 digitalWrite (your_led_pin, HIGH)
 //#define TXLED0 digitalWrite (your_led_pin, LOW)
 
-
+#include "blink.h"
 #include "io.h"
 #include "devices.h"
 #include "cmds.h"
@@ -88,9 +94,9 @@
 bool g_printHex;
 #endif
 
+unsigned long g_clearSlow;
 unsigned long g_initWait;
 bool g_initDone;
-bool g_txLed;
 
 void setup () {
 #ifdef ENABLE_SERIAL
@@ -101,20 +107,19 @@ void setup () {
     Serial.readBytes (&x, 1);
     Serial.println (F("Starting up!"));
 #endif
-    TXLED0;
-    g_txLed = false;
+    blinkClear ();
 
     setup_comm ();
     
     g_initDone = false;
-    g_initWait = millis () + 2000;
+    g_initWait = millis () + 500;
 }
 
 void loop () {
     //if we did not see an init after 2s of power up, we signal the HU
     if (!g_initDone && g_initWait < millis ()) {
             comm_signal ();
-            g_initWait = millis () + 2000;
+            g_initWait = millis () + 1000;
     }
     
     while (g_inByteReady) {
@@ -125,11 +130,6 @@ void loop () {
             g_inputBuffer[i] = g_inputBuffer[i+1];
         }
         g_inputBuffer[g_bufferSize - 1] = in;
-
-        if (g_txLed) {
-            TXLED0;
-            g_txLed = false;
-        }
 
 #ifdef ENABLE_SERIAL
         if (g_printHex) {
@@ -151,20 +151,25 @@ void loop () {
         }
 
         if (g_tooSlow) {
-            g_tooSlow = false;
-            RXLED1;
+            blinkSync (Fast);
+            if (g_clearSlow == 0) {
 #ifdef ENABLE_SERIAL
-            Serial.println ("slow!");
+                Serial.println ("slow!");
 #endif
+                g_clearSlow == millis () + 10000;
+            } else if (millis () > g_clearSlow) {
+                g_tooSlow = false;
+                g_clearSlow = 0;
+            }
+        } else {
+            blinkRX (Fast);
         }
     }
 
     sync_comm ();
 
-    if (!g_txLed) {
-        TXLED1;
-        g_txLed = true;
-    }
+    blinkSync (Slow);
+
 #ifdef ENABLE_SERIAL
     SerialEvent ();
 #endif
