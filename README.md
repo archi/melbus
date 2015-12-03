@@ -19,7 +19,7 @@ Special thanks to Reinis work on the protocol: http://volvo.wot.lv/wiki/doku.php
 He also has a more sophisticated carpc project at https://github.com/festlv/carpc
 But his implementation for the AVR does "too much", I just want to plugin a 3.5mm connector (from Bluetooth adapter) as pseudo CD-Changer, for now (and learn some stuff about embedded programming).
 
-I should also mention Karl at http://gizmosnack.blogspot.de/2015/11/aux-in-volvo-hu-xxxx-radio.html?showComment=1449100829151#c7922293115317624042 has a nice write up plus (more simple!) code for the Arduino Nano there.
+I should also mention Karl at http://gizmosnack.blogspot.de/2015/11/aux-in-volvo-hu-xxxx-radio.html has a nice write up plus (more simple!) code for the Arduino Nano there.
 
 # Future work
 
