@@ -55,7 +55,7 @@
 /**
  * Enable serial output
  */
-#define ENABLE_SERIAL
+//#define ENABLE_SERIAL
 
 /**
  * This macro controls a LED to signal error [perma on] or init/signaling [blink]
@@ -88,6 +88,10 @@
 bool g_printHex;
 #endif
 
+unsigned long g_initWait;
+bool g_initDone;
+bool g_txLed;
+
 void setup () {
 #ifdef ENABLE_SERIAL
     g_printHex = false;
@@ -95,22 +99,24 @@ void setup () {
     Serial.setTimeout (5000);
     char x;
     Serial.readBytes (&x, 1);
-    Serial.println (F("Waiting for master..."));
+    Serial.println (F("Starting up!"));
 #endif
+    TXLED0;
+    g_txLed = false;
 
     setup_comm ();
-    unsigned long startWaiting = millis ();
-    while (!g_inByteReady) {
-        if (millis () > startWaiting + 1000) {
-            startWaiting = 1000 + millis (); //add the delay in comm_signal!
-            comm_signal ();
-        }
-    }
+    
+    g_initDone = false;
+    g_initWait = millis () + 2000;
 }
 
-bool g_txLed = true;
-
 void loop () {
+    //if we did not see an init after 2s of power up, we signal the HU
+    if (!g_initDone && g_initWait < millis ()) {
+            comm_signal ();
+            g_initWait = millis () + 2000;
+    }
+    
     while (g_inByteReady) {
         unsigned char in = g_inByte;
         g_inByteReady = false;
@@ -131,7 +137,7 @@ void loop () {
         }
 #endif
 
-        Cmd c = decodeCmd ();
+        const Cmd c = decodeCmd ();
 
 #ifdef ENABLE_SERIAL
         if (c != Wait) {
@@ -139,7 +145,10 @@ void loop () {
         }
 #endif
         
-        handleCmd (c);
+        const bool allInitiated = handleCmd (c);
+        if (allInitiated || c == Init) {
+            g_initDone = true;
+        }
 
         if (g_tooSlow) {
             g_tooSlow = false;

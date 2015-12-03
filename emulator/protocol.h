@@ -1,4 +1,4 @@
-volatile Cmd g_currentCmd = Wait;
+Cmd g_currentCmd = Wait;
 device_t* volatile g_dev;
 
 Cmd decodeCmd () {
@@ -38,7 +38,7 @@ Cmd decodeCmd () {
     return Wait;
 }
 
-void handleCmd (Cmd in) {
+bool handleCmd (Cmd in) {
     Cmd c = g_currentCmd; 
    
     if (c != InitWaiting) {
@@ -46,19 +46,17 @@ void handleCmd (Cmd in) {
         g_currentCmd = c;
     }
     
-    if (c == Wait)
-        return;
-    
     switch (c) {
         case Wait:
             //do nothing, just wait...
-            return;
+            break;
             
         case NopAck:
             sendAck ();
             break;
 
         case Init:
+        case InitIgn:
 #ifdef ENABLE_SERIAL
             Serial.println ("clear init");
 #endif
@@ -90,12 +88,11 @@ void handleCmd (Cmd in) {
                     Serial.println ("all init");
 #endif
                     g_currentCmd = Wait;
-                }
-
-                //NO BREAK, but return:
-                return;
+                    return true;
+                }      
             }
-            break;
+            //NO BREAK, but return:
+            return false;
             
         case TrackInfo:
             sendBuffer (g_dev->info, 9);
@@ -144,4 +141,5 @@ void handleCmd (Cmd in) {
     } // end of switch (c)
     
     g_currentCmd = Wait;
+    return false;
 }

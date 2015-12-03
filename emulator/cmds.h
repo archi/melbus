@@ -1,5 +1,6 @@
 enum Cmd {
     Init,
+    InitIgn,
     InitWaiting, /* Pseudo command */
     TrackInfo,
     CartInfo,
@@ -21,7 +22,7 @@ struct cmd_t {
 #define g_cmdTableSize 14
 const struct cmd_t g_cmdTable[g_cmdTableSize] = {
     {Init,      3, {0x07, 0x1a, 0xee}},
-    {Init,      3, {0x00, 0x1c, 0xed}},
+    {InitIgn,   3, {0x00, 0x1c, 0xed}},
     {TrackInfo, 5, {0x1b, 0xe0, 0x01, 0x08, 0x10}}, //evtl no 0x10?
     {CartInfo,  2, {0x1e, 0xef}},
     {NextTrack, 4, {0x1b, 0x2d, 0x40, 0x01}},
@@ -40,6 +41,7 @@ void printCmd (Cmd c) {
 #define PCMD(_X_) case _X_: Serial.println (#_X_); break        
     switch (c) {
         PCMD (Init);
+        PCMD (InitIgn);
         PCMD (TrackInfo);
         PCMD (CartInfo);
         PCMD (NextTrack);
