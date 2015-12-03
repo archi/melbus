@@ -7,6 +7,11 @@
  * c toggle communication (allow answer)
  * 
  * p toggle printing of hex values
+ * 
+ * LED meaning:
+ *  RX: blinking for 1s -> signal presence
+ *  RX: const -> processing was too slow [never cleared!]
+ *  TX: on -> waiting for data
  */
 
 /**
@@ -48,10 +53,19 @@
 #define CLK_INTx INT0
 
 /**
- * Pin for notification LED (lighted when signaling presence)
- * This is an Arduino PIN number!
+ * Enable serial output
  */
-#define RXLED 17
+//#define ENABLE_SERIAL
+
+/**
+ * This macro controls a LED to signal error [perma on] or init/signaling [blink]
+ * For the pro micro it's predefined, but you might want to write one for other boards
+ * 
+ * LED blink for 1s -> signaling presence
+ * LED on -> processing was too low
+ */
+//#define RXLED1 digitalWrite (your_led_pin, HIGH)
+//#define RXLED0 digitalWrite (your_led_pin, LOW)
 
 /**
  * This macro controls a LED to signal communication
@@ -70,29 +84,39 @@
 #include "comm.h"
 #include "protocol.h"
 
+#ifdef ENABLE_SERIAL
 bool g_printHex;
+#endif
+
+unsigned long g_initWait;
+bool g_initDone;
+bool g_txLed;
 
 void setup () {
+#ifdef ENABLE_SERIAL
     g_printHex = false;
     Serial.begin(230400,SERIAL_8N1);
     Serial.setTimeout (5000);
     char x;
     Serial.readBytes (&x, 1);
-    Serial.println (F("Waiting for master..."));
+    Serial.println (F("Starting up!"));
+#endif
+    TXLED0;
+    g_txLed = false;
+
     setup_comm ();
-    unsigned long startWaiting = millis ();
-    while (!g_inByteReady) {
-        if (millis () > startWaiting + 1000) {
-            startWaiting = 1000 + millis (); //add the delay in comm_signal!
-            comm_signal ();
-        }
-    }
-    TXLED1;
+    
+    g_initDone = false;
+    g_initWait = millis () + 2000;
 }
 
-bool g_txLed = true;
-
 void loop () {
+    //if we did not see an init after 2s of power up, we signal the HU
+    if (!g_initDone && g_initWait < millis ()) {
+            comm_signal ();
+            g_initWait = millis () + 2000;
+    }
+    
     while (g_inByteReady) {
         unsigned char in = g_inByte;
         g_inByteReady = false;
@@ -107,21 +131,31 @@ void loop () {
             g_txLed = false;
         }
 
+#ifdef ENABLE_SERIAL
         if (g_printHex) {
             Serial.println (in, HEX);
         }
+#endif
 
-        Cmd c = decodeCmd ();
+        const Cmd c = decodeCmd ();
 
+#ifdef ENABLE_SERIAL
         if (c != Wait) {
             printCmd (c);
         }
+#endif
         
-        handleCmd (c);
+        const bool allInitiated = handleCmd (c);
+        if (allInitiated || c == Init) {
+            g_initDone = true;
+        }
 
         if (g_tooSlow) {
             g_tooSlow = false;
+            RXLED1;
+#ifdef ENABLE_SERIAL
             Serial.println ("slow!");
+#endif
         }
     }
 
@@ -131,10 +165,12 @@ void loop () {
         TXLED1;
         g_txLed = true;
     }
-    
+#ifdef ENABLE_SERIAL
     SerialEvent ();
+#endif
 }
 
+#ifdef ENABLE_SERIAL
 bool SerialEvent () {
     if (Serial.available ()) {
         char inChar = (char)Serial.read();
@@ -161,4 +197,4 @@ bool SerialEvent () {
     }
     return false;
 }
-
+#endif
