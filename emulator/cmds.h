@@ -17,6 +17,7 @@ struct cmd_t {
     const unsigned char code[6];
 };
 
+//TODO move to PROG_MEM?
 #define g_cmdTableSize 14
 const struct cmd_t g_cmdTable[g_cmdTableSize] = {
     {Init,      3, {0x07, 0x1a, 0xee}},

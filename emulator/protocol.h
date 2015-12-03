@@ -59,7 +59,9 @@ void handleCmd (Cmd in) {
             break;
 
         case Init:
+#ifdef ENABLE_SERIAL
             Serial.println ("clear init");
+#endif
             for (int i = 0; i < g_devicesSize; i++) {
                 g_devices[i].initialized = false;
             }
@@ -84,7 +86,9 @@ void handleCmd (Cmd in) {
                 }
                 
                 if (!haveUninitialized) {
+#ifdef ENABLE_SERIAL
                     Serial.println ("all init");
+#endif
                     g_currentCmd = Wait;
                 }
 

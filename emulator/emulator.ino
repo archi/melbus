@@ -7,6 +7,11 @@
  * c toggle communication (allow answer)
  * 
  * p toggle printing of hex values
+ * 
+ * LED meaning:
+ *  RX: blinking for 1s -> signal presence
+ *  RX: const -> processing was too slow [never cleared!]
+ *  TX: on -> waiting for data
  */
 
 /**
@@ -48,10 +53,19 @@
 #define CLK_INTx INT0
 
 /**
- * Pin for notification LED (lighted when signaling presence)
- * This is an Arduino PIN number!
+ * Enable serial output
  */
-#define RXLED 17
+#define ENABLE_SERIAL
+
+/**
+ * This macro controls a LED to signal error [perma on] or init/signaling [blink]
+ * For the pro micro it's predefined, but you might want to write one for other boards
+ * 
+ * LED blink for 1s -> signaling presence
+ * LED on -> processing was too low
+ */
+//#define RXLED1 digitalWrite (your_led_pin, HIGH)
+//#define RXLED0 digitalWrite (your_led_pin, LOW)
 
 /**
  * This macro controls a LED to signal communication
@@ -70,15 +84,20 @@
 #include "comm.h"
 #include "protocol.h"
 
+#ifdef ENABLE_SERIAL
 bool g_printHex;
+#endif
 
 void setup () {
+#ifdef ENABLE_SERIAL
     g_printHex = false;
     Serial.begin(230400,SERIAL_8N1);
     Serial.setTimeout (5000);
     char x;
     Serial.readBytes (&x, 1);
     Serial.println (F("Waiting for master..."));
+#endif
+
     setup_comm ();
     unsigned long startWaiting = millis ();
     while (!g_inByteReady) {
@@ -87,7 +106,6 @@ void setup () {
             comm_signal ();
         }
     }
-    TXLED1;
 }
 
 bool g_txLed = true;
@@ -107,21 +125,28 @@ void loop () {
             g_txLed = false;
         }
 
+#ifdef ENABLE_SERIAL
         if (g_printHex) {
             Serial.println (in, HEX);
         }
+#endif
 
         Cmd c = decodeCmd ();
 
+#ifdef ENABLE_SERIAL
         if (c != Wait) {
             printCmd (c);
         }
+#endif
         
         handleCmd (c);
 
         if (g_tooSlow) {
             g_tooSlow = false;
+            RXLED1;
+#ifdef ENABLE_SERIAL
             Serial.println ("slow!");
+#endif
         }
     }
 
@@ -131,10 +156,12 @@ void loop () {
         TXLED1;
         g_txLed = true;
     }
-    
+#ifdef ENABLE_SERIAL
     SerialEvent ();
+#endif
 }
 
+#ifdef ENABLE_SERIAL
 bool SerialEvent () {
     if (Serial.available ()) {
         char inChar = (char)Serial.read();
@@ -161,4 +188,4 @@ bool SerialEvent () {
     }
     return false;
 }
-
+#endif

@@ -19,6 +19,8 @@ inline void sync_comm () {
 }
 
 inline void sendByteRaw (const unsigned char b) {
+    //turn of TXLED, so a permanent on TXLED + loss of comm -> no more ext clock
+    TXLED0;
     for (int bitPos = 7; bitPos >= 0; bitPos--) {
         bool val = b & (1 << bitPos);
         if (val) {
@@ -46,11 +48,13 @@ void sendBuffer (unsigned char* buf, int len, int offset = 0) {
     ioCfgData (true);
     intFastOn;
 
+#ifdef ENABLE_SERIAL
     Serial.print ("SENT BUFFER: ");
     for (int bytePos = offset; bytePos < len-1; bytePos++) {
         Serial.print (buf[bytePos]);
     }
     Serial.println (buf[len-1]);
+#endif
 }
 
 void sendByte (const unsigned char b) {
@@ -61,9 +65,11 @@ void sendByte (const unsigned char b) {
     
     ioCfgData (true);
     intFastOn;
-     
+
+#ifdef ENABLE_SERIAL
     Serial.print ("SENT: ");
     Serial.println (b, HEX);
+#endif
 }
 
 inline void sendAck () {
@@ -102,7 +108,15 @@ void comm_signal () {
            
     ioCfgBusy (false); //output
     writePin (BUSY_PIN, 0); //low
-    delay(1000);
+
+    //blink RX LED for about 1s
+    for (int i = 0; i < 5; i++) {
+        RXLED1;
+        delay (100);
+        RXLED0;
+        delay (100);
+    }
+    
     writePin (BUSY_PIN, 1); //high
     ioCfgBusy (true); //input
     
@@ -124,19 +138,4 @@ void setup_comm () {
     ioCfgData (true);
     ioCfgClock ();
     attachInterrupt (CLK_INT, isr_clock, RISING);
-    
-    //pull low for 1s to signal presence
-    ioCfgBusy (false);
-    writePin (BUSY_PIN, 0);
-
-    //blink TX+RX LED for about 1s
-    for (int i = 0; i < 5; i++) {
-        digitalWrite (RXLED, LOW);
-        delay (100);
-        digitalWrite (RXLED, HIGH);
-        delay (100);
-    }
-    
-    writePin (BUSY_PIN, 1);
-    ioCfgBusy (true);    
 }
