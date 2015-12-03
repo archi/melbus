@@ -156,7 +156,7 @@ void loop () {
 #ifdef ENABLE_SERIAL
                 Serial.println ("slow!");
 #endif
-                g_clearSlow == millis () + 10000;
+                g_clearSlow = millis () + 10000;
             } else if (millis () > g_clearSlow) {
                 g_tooSlow = false;
                 g_clearSlow = 0;
