@@ -11,6 +11,8 @@ The Sketch is configured for my SparkFun Arduino Pro Mico 5V/16MHz, but can easi
 **If you want to use this on an Arduino in your car, I recommend using the stable branch**.
 That branch is still pre-alpha, but should at least not contain untested changes. That way you don't need to search for a working commit.
 
+Most important, the stable branch should give you a version which at least supplies you with some kind of AUX input.
+
 # Acknowledgement
 
 Special thanks to Reinis work on the protocol: http://volvo.wot.lv/wiki/doku.php?id=melbus
