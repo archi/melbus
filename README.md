@@ -10,6 +10,9 @@ Maybe later I will try to forward the buttons to my android phone.
 I implemented most of the Melbus IO code in `shared/`. Sniffer and emulator prototypes are placed in the respective folders.
 Those Arduino Sketches build for my SparkFun Arduino Pro Mico 5V/16MHz. But I didn't get around to flash them.
 
+**If you want to use this on an Arduino in your car, I recommend using the stable branch**.
+That branch is still pre-alpha, but should at least not contain untested changes. That way you don't need to search for a working commit.
+
 # Acknowledgement
 
 Special thanks to Reinis Veips work on the protocol: http://volvo.wot.lv/wiki/doku.php?id=melbus
