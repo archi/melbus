@@ -33,6 +33,7 @@ In no general order:
 5. Clean switching of audio via relays [maybe]
 6. Control power of a raspberry pi, which could act as a Media Player [attached to RTI input]
 5. Use a Bluetooth board to stream AD2P (if that's possible with Arduino)
+6. migrate parts of the code to C++ classes insteads of polluting the global namespace
 
 # Power control plans:
 
