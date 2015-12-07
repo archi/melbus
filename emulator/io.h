@@ -7,7 +7,7 @@
 #define intFastOn  EIMSK |= (1<<CLK_INTx)
 #define intFastOff EIMSK &= ~(1<<CLK_INTx)
 
-void ioCfgData (bool input) {
+inline void ioCfgData (bool input) {
     if (input) {
         SET0 (DDRx, DATA_PIN);  // input
         SET1 (PORTx, DATA_PIN); // enable pull up
@@ -17,7 +17,7 @@ void ioCfgData (bool input) {
     }
 }
 
-void ioCfgBusy (bool input) {
+inline void ioCfgBusy (bool input) {
     if (input) {
         SET0 (DDRx, BUSY_PIN);  // input
         SET1 (PORTx, BUSY_PIN); // disable pull up
@@ -27,7 +27,7 @@ void ioCfgBusy (bool input) {
     }
 }
 
-void ioCfgClock () {
+inline void ioCfgClock () {
     SET0 (DDRx, CLK_PIN); //input
     SET1 (PORTx, CLK_PIN); //pull up
 }
