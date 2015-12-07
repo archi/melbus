@@ -1,3 +1,7 @@
+/**
+ * Since these functions are also used in the ISR, one could make the variables here volatile
+ * But imho it's okay if the blink state gets messed up for the fraction of a second.
+ */
 unsigned long g_rxTime = 0;
 unsigned long g_txTime = 0;
 bool g_rxState = false;
