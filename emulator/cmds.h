@@ -37,6 +37,7 @@ const struct cmd_t g_cmdTable[g_cmdTableSize] = {
     {NopAck,    2, {0x19, 0x52}}     //RndMode
 };
 
+#ifdef ENABLE_SERIAL
 void printCmd (Cmd c) {
 #define PCMD(_X_) case _X_: Serial.println (#_X_); break        
     switch (c) {
@@ -54,3 +55,4 @@ void printCmd (Cmd c) {
     }
 #undef PCMD
 }
+#endif
