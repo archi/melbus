@@ -27,7 +27,12 @@ inline void ioCfgBusy (bool input) {
     }
 }
 
-inline void ioCfgClock () {
-    SET0 (DDRx, CLK_PIN); //input
-    SET1 (PORTx, CLK_PIN); //pull up
+inline void ioCfgClock (bool input) {
+    if (input) {
+        SET0 (DDRx, CLK_PIN); //input
+        SET1 (PORTx, CLK_PIN); //pull up
+    } else {
+        SET1 (DDRx, CLK_PIN); //output
+        SET1 (PORTx, CLK_PIN); //default to HIGH
+    }
 }

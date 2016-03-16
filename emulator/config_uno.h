@@ -20,7 +20,7 @@
 #define CLK_INT 0
 #define CLK_INTx INT0
 
-#define TXLED0
-#define TXLED1
+#define TXLED0 digitalWrite (13, LOW)
+#define TXLED1 digitalWrite (13, HIGH)
 #define RXLED0
 #define RXLED1

@@ -26,32 +26,65 @@ inline void sendByteRaw (const unsigned char b) {
         } else {
             writePin (DATA_PIN, 0);
         }
-
-        while (readPin (CLK_PIN))  { blinkTX(Fast); };
-        while (!readPin (CLK_PIN)) { blinkTX(Fast); };
+        
+        if (readPin (CLK_PIN)) {
+            while (readPin (CLK_PIN))  {
+                blinkTX(Fast);
+            }
+        }
+        while (!readPin (CLK_PIN))
+        {
+            blinkTX(Fast);
+        }
     }
 }
 
-void sendBuffer (unsigned char* buf, int len, int offset = 0) {
-    return;
-    intFastOff;
-    ioCfgData (false); //output mode
-    
-    for (int bytePos = offset; bytePos < len; bytePos++) {
-        sendByteRaw (buf[bytePos]);
+inline void sendByteRawClkd (const unsigned char b) {
+    for (int bitPos = 7; bitPos >= 0; bitPos--) {
+        writePin (CLK_PIN, 0);
+        delayMicroseconds(8);
+        
+        bool val = b & (1 << bitPos);
+        if (val) {
+            writePin (DATA_PIN, 1);
+        } else {
+            writePin (DATA_PIN, 0);
+        }
+        
+        writePin (CLK_PIN, 1);
+        delayMicroseconds(8);
     }
+}
+
+void sendBuffer (unsigned char* buf, int len) {
+    unsigned char b;
+
+    //output mode
+    intFastOff;
+    ioCfgData (false);  
+    ioCfgClock (false); 
+    ioCfgBusy (true);
     
+    for (int bytePos = 0; bytePos < len; bytePos++) {
+        b = buf[bytePos];
+        sendByteRawClkd (b);
+    }
+   
+    //input mode
+    ioCfgBusy (false);
+    ioCfgClock (true);
     ioCfgData (true);
     intFastOn;
 
     blinkClear ();
 
 #ifdef ENABLE_SERIAL
-    Serial.print ("SENT BUFFER: ");
-    for (int bytePos = offset; bytePos < len-1; bytePos++) {
-        Serial.print (buf[bytePos]);
+    Serial.print ("> ");
+    for (int bytePos = 0; bytePos < len - 1; bytePos++) {
+        Serial.print (buf[bytePos], HEX);
+        Serial.print (" ");
     }
-    Serial.println (buf[len-1]);
+    Serial.println (buf[len-1], HEX);
 #endif
 }
 
@@ -169,7 +202,7 @@ void setup_comm () {
     g_inCurrentByte = 0x0;
     
     ioCfgData (true);
-    ioCfgClock ();
+    ioCfgClock (true);
     attachInterrupt (CLK_INT, isr_clock, RISING);
 }
 

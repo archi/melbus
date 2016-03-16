@@ -51,6 +51,12 @@ bool handleCmd (Cmd in) {
             //do nothing, just wait...
             break;
             
+        case PowerUp:
+        case PowerDown:
+        case FFWD:
+        case FREW:
+        case ScanMode:
+        case RndMode:
         case NopAck:
             sendAck ();
             break;
@@ -95,35 +101,39 @@ bool handleCmd (Cmd in) {
             return false;
             
         case TrackInfo:
-            sendBuffer (g_dev->info, 9);
+            sendBuffer (g_dev->trackInfo, 9);
+//            sendBuffer (fakeTI, 9);
             break;
             
         case CartInfo:
-            sendBuffer (g_dev->info, 6, 9);
+            sendBuffer (g_dev->cartInfo, 6);
+//            sendBuffer (fakeCI, 6);
             break;
             
         case NextTrack:
             {
-                unsigned char n = g_dev->info[5]+1;
+                unsigned char n = g_dev->trackInfo[5];
+                n++;
                 if (n > 0x99) n = 0x99;
                 if ((n & 0x0f) > 0x09) n += 6;
-                g_dev->info[5] = n;
+                g_dev->trackInfo[5] = n;
                 break;
             }
         
         case PrevTrack:
             {
-                char n = g_dev->info[5]-1;
+                char n = g_dev->trackInfo[5];
+                n--;
                 if (n == 0x00) n = 0x01;
                 if ((n & 0x0f) == 0x0f) n -= 6;
-                g_dev->info[5] = n;
+                g_dev->trackInfo[5] = n;
                 break;
             }
         
         case PrevDisc:
         case NextDisc:
             {
-                char n = g_dev->info[3];
+                char n = g_dev->trackInfo[3];
                 if (c == NextDisc)
                     n++;
                 else
@@ -131,8 +141,8 @@ bool handleCmd (Cmd in) {
                 
                 if (n > 0x0a)
                     n = 0x0a;
-                g_dev->info[3] = n;
-                g_dev->info[5] = 0x01;
+                g_dev->trackInfo[3] = n;
+                g_dev->trackInfo[5] = 0x01;
                 sendAck ();
                 break;
             }

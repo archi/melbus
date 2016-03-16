@@ -46,8 +46,8 @@ void setup () {
     g_printHex = false;
     Serial.begin(230400,SERIAL_8N1);
     Serial.setTimeout (5000);
-    char x;
-    Serial.readBytes (&x, 1);
+   // char x;
+   // Serial.readBytes (&x, 1);
     Serial.println (F("Starting up!"));
 #endif
     blinkClear ();

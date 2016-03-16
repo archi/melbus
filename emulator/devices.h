@@ -4,11 +4,12 @@ struct device_t {
     const unsigned char respId;
     bool enabled;
     bool initialized;
-    unsigned char info[15];
+    unsigned char trackInfo[9];
+    unsigned char cartInfo[6];
 };
 
-//init, {TRACK + CART}      0     1     2     3     4     5     6     7     8 ||| 9     10    11    12    13    14
-#define DEV_DEFAULT false, {0x00, 0x02, 0x00, 0x01, 0x80, 0x01, 0xff, 0x60, 0x60, 0x00, 0x0f, 0xff, 0x4a, 0xfc, 0xff }
+//init, {TRACK}, {CART}     0     1     2     3     4     5     6     7     8   ||| 9     10    11    12    13    14
+#define DEV_DEFAULT false, {0x00, 0x02, 0x00, 0x01, 0x80, 0x01, 0xff, 0x60, 0x60}, {0x00, 0x0f, 0xff, 0x4a, 0xfc, 0xff }
 /*
 0 ?
 1 02 stop, 08 play
@@ -36,5 +37,8 @@ struct device_t {
 #define g_devicesSize 2
 struct device_t g_devices[g_devicesSize] = {
       {"MDC", 0xd8, 0xde, ENABLE_MDC, DEV_DEFAULT} //MD-C
-    , {"CDC", 0x8e, 0xee, ENABLE_CDC, DEV_DEFAULT} //CD-C
+    , {"CDC", 0xe8, 0xee, ENABLE_CDC, DEV_DEFAULT} //CD-C
 };
+
+unsigned char fakeCI[6] = {0x00, 0x0f, 0xff, 0x4a, 0xfc, 0xff };
+unsigned char fakeTI[9] = {0x00, 0x02, 0x00, 0x01, 0x80, 0x01, 0xff, 0x60, 0x60};
