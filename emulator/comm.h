@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /**
  *  archi/melbus - A melbus node for CD/MD emulation in swedish cars, for Arduino
  *  See https://github.com/archi/melbus
