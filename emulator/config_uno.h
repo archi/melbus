@@ -20,7 +20,12 @@
 #define CLK_INT 0
 #define CLK_INTx INT0
 
-#define TXLED0 digitalWrite (13, LOW)
-#define TXLED1 digitalWrite (13, HIGH)
-#define RXLED0
-#define RXLED1
+#define TXLED0 digitalWrite (11, LOW)
+#define TXLED1 digitalWrite (11, HIGH)
+#define RXLED0 digitalWrite (12, LOW)
+#define RXLED1 digitalWrite (12, HIGH)
+
+#define INIT_BOARD {\
+    pinMode (11, OUTPUT);\
+    pinMode (12, OUTPUT);\
+}

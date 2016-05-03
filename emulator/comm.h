@@ -1,8 +1,14 @@
-enum State {Send, Receive};
+enum State {PreSend, Send, Receive};
 volatile State g_state = Receive;
 
-#define g_bufferSize 8
-unsigned char g_inputBuffer[g_bufferSize] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+#define g_bufferSize 10
+unsigned char g_inputBuffer[g_bufferSize] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+unsigned char g_outputBuffer[g_bufferSize] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+unsigned short g_outputBufferLength = 0;
+unsigned short g_outputBufferPos = 0;
+signed short g_outputBitPos = 0;
+unsigned char g_outputCurrentByte = 0xff;
+
 
 volatile bool g_inByteReady = false;
 volatile bool g_tooSlow = false;
@@ -18,7 +24,7 @@ inline void sync_comm () {
     }
 }
 
-inline void sendByteRaw (const unsigned char b) {
+inline void sendByteRaw (const unsigned char b, bool signal = false) {
     for (int bitPos = 7; bitPos >= 0; bitPos--) {
         bool val = b & (1 << bitPos);
         if (val) {
@@ -26,16 +32,26 @@ inline void sendByteRaw (const unsigned char b) {
         } else {
             writePin (DATA_PIN, 0);
         }
+
+        if (signal) {
+            ioCfgBusy (false);
+            writePin (BUSY_PIN, 1);
+        }
         
         if (readPin (CLK_PIN)) {
             while (readPin (CLK_PIN))  {
-                blinkTX(Fast);
+                blinkRX(Fast);
             }
         }
         while (!readPin (CLK_PIN))
         {
             blinkTX(Fast);
         }
+
+        if (signal)
+            ioCfgBusy (true);
+
+        
     }
 }
 
@@ -57,28 +73,39 @@ inline void sendByteRawClkd (const unsigned char b) {
 }
 
 void sendBuffer (unsigned char* buf, int len) {
-    unsigned char b;
+    //This is a bit more awkward
+    //we put the buffer into the memory and sent a 0xff with a self generated clock to signal it's ready
+    //than we get a set of 0xff bytes from the master, on which we send the data
 
     //output mode
     intFastOff;
-    ioCfgData (false);  
-    ioCfgClock (false); 
-    ioCfgBusy (true);
-    
-    for (int bytePos = 0; bytePos < len; bytePos++) {
-        b = buf[bytePos];
-        sendByteRawClkd (b);
+//    ioCfgBusy (true);
+    ioCfgData (false);
+
+    delayMicroseconds (20);
+
+    unsigned char b = 0x0;
+    for (int i = 0; i < len; ++i) {
+        b = buf[i];
+        sendByteRaw (b, true);
     }
+
+    ioCfgData (true);
+
+//    memcpy (&g_outputBuffer, buf, len);
+//    g_outputBufferLength = len;
+//    g_outputBufferPos = 0;
+//    g_outputBitPos = 0;
+ //   g_state = Send;
+
    
     //input mode
-    ioCfgBusy (false);
-    ioCfgClock (true);
-    ioCfgData (true);
+//    ioCfgBusy (true);
     intFastOn;
 
     blinkClear ();
 
-#ifdef ENABLE_SERIAL
+#ifdef ENABLE_SERIAL_
     Serial.print ("> ");
     for (int bytePos = 0; bytePos < len - 1; bytePos++) {
         Serial.print (buf[bytePos], HEX);
@@ -111,9 +138,41 @@ inline void sendAck () {
 }
 
 void isr_clock () {
+    unsigned char b = 0x0;
+    //load the next byte if necessary
+    if (g_state == Send && g_outputBitPos == 0) {
+        g_outputBufferPos++;
+        //whoops, we sent everything -> back to receive
+        if (g_outputBufferPos > g_outputBufferLength) {
+            ioCfgData (true);
+            Serial.println ("!!"); //signaled data
+            g_state = Receive;
+        } else {
+            g_outputCurrentByte = g_outputBuffer[g_outputBufferPos];
+            g_outputBitPos = 8;
+            Serial.println (g_outputCurrentByte, HEX);
+        }
+    }
+
+    if (g_state == Send) {
+        ioCfgData (false);
+
+        g_outputBitPos--;
+        bool val = g_outputCurrentByte & (1 << g_outputBitPos);
+        if (val) {
+            writePin (DATA_PIN, 1);
+        } else {
+            writePin (DATA_PIN, 0);
+        }
+
+        ioCfgBusy (false);
+        delayMicroseconds (20);
+        ioCfgBusy (true);
+        return;
+    }
+
     if (g_state == Receive) {
         int bitsRead = g_bitsRead;
-        unsigned char b = 0x0;
         if (bitsRead > 0)
             b = g_inCurrentByte;
 

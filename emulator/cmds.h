@@ -45,25 +45,25 @@ const struct cmd_t g_cmdTable[g_cmdTableSize] = {
 
 #ifdef ENABLE_SERIAL
 void printCmd (Cmd c) {
-#define PCMD(_X_) case _X_: Serial.println (#_X_); break        
+#define PCMD(_Y_, _X_) case _X_: Serial.println (#_Y_); break        
     switch (c) {
-        PCMD (Init);
-        PCMD (InitIgn);
-        PCMD (TrackInfo);
-        PCMD (CartInfo);
-        PCMD (NextTrack);
-        PCMD (PrevTrack);
-        PCMD (NextDisc);
-        PCMD (PrevDisc);
-        PCMD (NopAck);
-        PCMD (InitWaiting);
-        PCMD (Wait);
-        PCMD (PowerUp);
-        PCMD (PowerDown);
-        PCMD (FFWD);
-        PCMD (FREW);
-        PCMD (ScanMode);
-        PCMD (RndMode);
+        PCMD (I0, Init);
+        PCMD (I1, InitIgn);
+        PCMD (TI, TrackInfo);
+        PCMD (CI, CartInfo);
+        PCMD (T>, NextTrack);
+        PCMD (T<, PrevTrack);
+        PCMD (D>, NextDisc);
+        PCMD (D<, PrevDisc);
+        PCMD (NA, NopAck);
+        PCMD (IW, InitWaiting);
+        PCMD (WT, Wait);
+        PCMD (PU, PowerUp);
+        PCMD (PD, PowerDown);
+        PCMD (FF, FFWD);
+        PCMD (FR, FREW);
+        PCMD (SM, ScanMode);
+        PCMD (RM, RndMode);
     }
 #undef PCMD
 }
