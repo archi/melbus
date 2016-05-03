@@ -61,10 +61,11 @@ unsigned long g_initWait;
 bool g_initDone;
 
 void setup () {
+    INIT_BOARD
 #ifdef ENABLE_SERIAL
     g_printHex = false;
     Serial.begin(230400,SERIAL_8N1);
-    Serial.setTimeout (5000);
+    Serial.setTimeout (1000);
    // char x;
    // Serial.readBytes (&x, 1);
     Serial.println (F("Starting up!"));

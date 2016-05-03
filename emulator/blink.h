@@ -87,9 +87,9 @@ inline void blinkClear () {
 }
 
 enum BlinkSpeed {
-    Fast = 50,
-    Normal = 100,
-    Slow = 200
+    Fast = 100,
+    Normal = 200,
+    Slow = 500
 };
 
 inline void blinkRX (BlinkSpeed s) {

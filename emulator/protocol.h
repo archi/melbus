@@ -45,8 +45,10 @@ Cmd decodeCmd () {
                     continue;
                 
                 char id = g_devices[i].baseId;
-                if (id == devId || (id + 1) == devId)
+                if (id == devId || (id + 1) == devId) {
+                    g_dev = &(g_devices[i]);
                     return cmd;
+                }
             }
             
             //cmd matches, but is not for us
@@ -120,7 +122,7 @@ bool handleCmd (Cmd in) {
             return false;
             
         case TrackInfo:
-            sendBuffer (g_dev->trackInfo, 9);
+//            sendBuffer (g_dev->trackInfo, 9);
 //            sendBuffer (fakeTI, 9);
             break;
             
