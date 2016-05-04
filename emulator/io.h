@@ -23,16 +23,19 @@
 #define readPin(_X_) (PINx & (0x1 << _X_))
 #define writePin(_X_, _Y_) { if (_Y_) { SET1 (PORTx, _X_); } else { SET0 (PORTx, _X_);} }
 
+#define readData() (DATA_PINx & (0x1 << DATA_PIN))
+#define writeData(_Y_) { if (_Y_) { SET1 (DATA_PORTx, DATA_PIN); } else { SET0 (DATA_PORTx, DATA_PIN); } }
+
 #define intFastOn  EIMSK |= (1<<CLK_INTx)
 #define intFastOff EIMSK &= ~(1<<CLK_INTx)
 
 inline void ioCfgData (bool input) {
     if (input) {
-        SET0 (DDRx, DATA_PIN);  // input
-        SET1 (PORTx, DATA_PIN); // enable pull up
+        SET0 (DATA_DDRx, DATA_PIN);  // input
+        SET1 (DATA_PORTx, DATA_PIN); // enable pull up
     } else {
-        SET1 (DDRx, DATA_PIN);  // output
-        SET0 (PORTx, DATA_PIN); // default to HIGH
+        SET1 (DATA_DDRx, DATA_PIN);  // output
+        SET0 (DATA_PORTx, DATA_PIN); // default to HIGH
     }
 }
 

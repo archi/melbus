@@ -1,3 +1,5 @@
 emulator/config.h
 .build_ano
 lib/
+*.swp
+*.swo

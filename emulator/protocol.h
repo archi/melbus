@@ -120,7 +120,7 @@ bool handleCmd (Cmd in) {
             
         case TrackInfo:
 //            sendBuffer (g_dev->trackInfo, 9);
-//            sendBuffer (fakeTI, 9);
+            sendBuffer (fakeTI, 9);
             break;
             
         case CartInfo:

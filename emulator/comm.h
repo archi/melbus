@@ -47,9 +47,9 @@ inline void sendByteRaw (const unsigned char b, bool signal = false) {
     for (int bitPos = 7; bitPos >= 0; bitPos--) {
         bool val = b & (1 << bitPos);
         if (val) {
-            writePin (DATA_PIN, 1);
+            writeData (1);
         } else {
-            writePin (DATA_PIN, 0);
+            writeData (0);
         }
 
         if (signal) {
@@ -77,9 +77,9 @@ inline void sendByteRawClkd (const unsigned char b) {
         
         bool val = b & (1 << bitPos);
         if (val) {
-            writePin (DATA_PIN, 1);
+            writeData (1);
         } else {
-            writePin (DATA_PIN, 0);
+            writeData (0);
         }
         
         writePin (CLK_PIN, 1);
@@ -88,37 +88,16 @@ inline void sendByteRawClkd (const unsigned char b) {
 }
 
 void sendBuffer (unsigned char* buf, int len) {
-    //This is a bit more awkward
-    //we put the buffer into the memory and sent a 0xff with a self generated clock to signal it's ready
-    //than we get a set of 0xff bytes from the master, on which we send the data
-
-    //output mode
-    intFastOff;
-//    ioCfgBusy (true);
-    ioCfgData (false);
-
-    delayMicroseconds (20);
-
-    unsigned char b = 0x0;
-    for (int i = 0; i < len; ++i) {
-        b = buf[i];
-        sendByteRaw (b, true);
+    return;
+    //copy the buffer into our output buffer:
+    for (int i = 0; i < len; i++) {
+        g_outputBuffer[i] = buf[i];
     }
 
-    ioCfgData (true);
-
-//    memcpy (&g_outputBuffer, buf, len);
-//    g_outputBufferLength = len;
-//    g_outputBufferPos = 0;
-//    g_outputBitPos = 0;
- //   g_state = Send;
-
-   
-    //input mode
-//    ioCfgBusy (true);
-    intFastOn;
-
-    blinkClear ();
+    g_outputBufferPos = 0;
+    g_outputBufferLength = len;
+    g_outputBitPos = 0;
+    g_state = PreSend;
 
 #ifdef ENABLE_SERIAL_
     Serial.print ("> ");
@@ -154,46 +133,47 @@ inline void sendAck () {
 
 void isr_clock () {
     unsigned char b = 0x0;
+
+    if (g_state == PreSend) {
+        ioCfgData (false);
+        g_state = Send;
+    }
+
     //load the next byte if necessary
-#if 0
     if (g_state == Send && g_outputBitPos == 0) {
-        g_outputBufferPos++;
+        signed short pos = g_outputBufferPos++;
         //whoops, we sent everything -> back to receive
-        if (g_outputBufferPos > g_outputBufferLength) {
+        if (pos >= g_outputBufferLength) {
             ioCfgData (true);
-            Serial.println ("!!"); //signaled data
             g_state = Receive;
         } else {
-            g_outputCurrentByte = g_outputBuffer[g_outputBufferPos];
+            g_outputCurrentByte = g_outputBuffer[pos];
             g_outputBitPos = 8;
+            Serial.print (":");
             Serial.println (g_outputCurrentByte, HEX);
         }
     }
 
     if (g_state == Send) {
-        ioCfgData (false);
-
         g_outputBitPos--;
         bool val = g_outputCurrentByte & (1 << g_outputBitPos);
+        delayMicroseconds (4);
         if (val) {
-            writePin (DATA_PIN, 1);
+            writeData (1); //should be 1
         } else {
-            writePin (DATA_PIN, 0);
+            writeData (0); //should be 0
         }
 
-        ioCfgBusy (false);
-        delayMicroseconds (20);
-        ioCfgBusy (true);
         return;
     }
-#endif
+
     if (g_state == Receive) {
         int bitsRead = g_bitsRead;
         if (bitsRead > 0)
             b = g_inCurrentByte;
 
         b <<= 1;
-        if (readPin (DATA_PIN)) {
+        if (readData ()) {
             b += 0x1;
         }
         g_inCurrentByte = b & 0xff;

@@ -65,7 +65,7 @@ void setup () {
 #ifdef ENABLE_SERIAL
     g_printHex = false;
     Serial.begin(230400,SERIAL_8N1);
-    Serial.setTimeout (1000);
+    Serial.setTimeout (250);
    // char x;
    // Serial.readBytes (&x, 1);
     Serial.println (F("Starting up!"));
@@ -81,8 +81,8 @@ void setup () {
 void loop () {
     //if we did not see an init after 2s of power up, we signal the HU
     if (!g_initDone && g_initWait < millis ()) {
-            comm_signal ();
-            g_initWait = millis () + 1000;
+        comm_signal ();
+        g_initWait = millis () + 1000;
     }
     
     while (g_inByteReady) {

@@ -33,11 +33,17 @@
 #define DDRx DDRD
 #define PORTx PORTD
 #define PINx PIND
-#define DATA_PIN 3
+//#define DATA_PIN 3
 #define BUSY_PIN 4
 #define CLK_PIN 2
 #define CLK_INT 0
 #define CLK_INTx INT0
+
+//use PB2
+#define DATA_PIN   PB2
+#define DATA_PORTx PORTB
+#define DATA_DDRx  DDRB
+#define DATA_PINx  PINB
 
 #define TXLED0 digitalWrite (11, LOW)
 #define TXLED1 digitalWrite (11, HIGH)
