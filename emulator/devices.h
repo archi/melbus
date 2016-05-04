@@ -55,7 +55,7 @@ struct device_t {
 
 #define g_devicesSize 2
 struct device_t g_devices[g_devicesSize] = {
-      {"MDC", 0xd8, 0xde, ENABLE_MDC, DEV_DEFAULT} //MD-C
+      {"MDC", 0xd8, 0xde, true, DEV_DEFAULT} //MD-C
     , {"CDC", 0xe8, 0xee, ENABLE_CDC, DEV_DEFAULT} //CD-C
 };
 

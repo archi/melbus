@@ -57,10 +57,8 @@ inline void sendByteRaw (const unsigned char b, bool signal = false) {
             writePin (BUSY_PIN, 1);
         }
         
-        if (readPin (CLK_PIN)) {
-            while (readPin (CLK_PIN))  {
-                blinkRX(Fast);
-            }
+        while (readPin (CLK_PIN))  {
+            blinkRX(Fast);
         }
         while (!readPin (CLK_PIN))
         {
@@ -69,8 +67,6 @@ inline void sendByteRaw (const unsigned char b, bool signal = false) {
 
         if (signal)
             ioCfgBusy (true);
-
-        
     }
 }
 
@@ -146,7 +142,7 @@ void sendByte (const unsigned char b) {
     blinkClear ();
 
 #ifdef ENABLE_SERIAL
-    Serial.print ("SENT: ");
+    Serial.print ("> ");
     Serial.println (b, HEX);
 #endif
 }
@@ -159,6 +155,7 @@ inline void sendAck () {
 void isr_clock () {
     unsigned char b = 0x0;
     //load the next byte if necessary
+#if 0
     if (g_state == Send && g_outputBitPos == 0) {
         g_outputBufferPos++;
         //whoops, we sent everything -> back to receive
@@ -189,7 +186,7 @@ void isr_clock () {
         ioCfgBusy (true);
         return;
     }
-
+#endif
     if (g_state == Receive) {
         int bitsRead = g_bitsRead;
         if (bitsRead > 0)

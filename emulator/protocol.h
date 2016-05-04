@@ -84,9 +84,6 @@ bool handleCmd (Cmd in) {
 
         case Init:
         case InitIgn:
-#ifdef ENABLE_SERIAL
-            Serial.println ("clear init");
-#endif
             for (int i = 0; i < g_devicesSize; i++) {
                 g_devices[i].initialized = false;
             }
@@ -127,7 +124,7 @@ bool handleCmd (Cmd in) {
             break;
             
         case CartInfo:
-            sendBuffer (g_dev->cartInfo, 6);
+//            sendBuffer (g_dev->cartInfo, 6);
 //            sendBuffer (fakeCI, 6);
             break;
             
